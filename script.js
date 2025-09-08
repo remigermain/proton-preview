@@ -34,9 +34,11 @@
     // request interceptor here
     const response = await originalFetch(resource, config);
 
-    // -- response interceptor here
-
-    //
+    /*
+      Response interceptor here
+    */
+  
+    // frontend permission
     if (response.url.includes("proton.me/api/feature/v2/frontend")) {
       const res = response.clone()
       res.json = proxyMethod(res.json, (data) => {
@@ -50,8 +52,7 @@
             "name": "disabled",
             "enabled": false
           }
-        })
-        data.toggles.push({
+        }, {
           "name": "DocsSheetsEnabled",
           "enabled": true,
           "impressionData": false,
@@ -81,6 +82,8 @@
       res.json = async () => ({ Meetings: [] })
       return proxyProperty(res, { status: 200 })
     }
+
+    // return default reponse
     return response;
   }
 })();
