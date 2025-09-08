@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         proton.sheet
+// @name         proton.preview
 // @namespace    http://tampermonkey.net/
 // @version      2025-09-08
 // @description  proton more sheet
@@ -37,13 +37,18 @@
     /*
       Response interceptor here
     */
-  
+
     // frontend permission
     if (response.url.includes("proton.me/api/feature/v2/frontend")) {
       const res = response.clone()
       res.json = proxyMethod(res.json, (data) => {
 
+        // remove permission for not duplicate rules
+        const removePermssions = new Set(["DocsSheetsDisabled", "DocsSheetsEnabled", "MeetEarlyAccess"])
+        data.toggles = data.toggles.filter((el) => !removePermssions.has(el.name))
+
         // enable proton-sheet
+        // enable proton-meet preview
         data.toggles.push({
           "name": "DocsSheetsDisabled",
           "enabled": false,
@@ -60,10 +65,7 @@
             "name": "disabled",
             "enabled": false
           }
-        })
-
-        // enable meet preview
-        data.toggles.push({
+        },{
           "name": "MeetEarlyAccess",
           "enabled": true,
           "impressionData": false,
@@ -72,12 +74,13 @@
             "enabled": false
           }
         })
+
         return data
       })
       return res
     }
     // fake response from gettings meetings (return empty list)
-    if (response.url.includes("meet.proton.me/api/meet/v1/meetings/active")) {
+    if (response.url.includes("meet.proton.me/api/meet/v1/meetings/active") && response.status === 404) {
       const res = response.clone()
       res.json = async () => ({ Meetings: [] })
       return proxyProperty(res, { status: 200 })
